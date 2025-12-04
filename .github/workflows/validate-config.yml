@@ -1,0 +1,41 @@
+---
+name: Renovate Config Validator
+
+permissions: {}
+
+'on':
+  push:
+    paths:
+      - 'renovate.json'
+      - '.github/renovate.json'
+      - '.github/workflows/validate-config.yml'
+  pull_request:
+    paths:
+      - 'renovate.json'
+      - '.github/renovate.json'
+
+jobs:
+  validate:
+    name: Validate Renovate Configuration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+
+      - name: Validate Renovate config
+        uses: renovatebot/github-action@03026bd55840025343414baec5d9337c5f9c7ea7  # v44.0.4
+        with:
+          configurationFile: .github/renovate.json
+          renovate-version: 41.152.2
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          LOG_LEVEL: debug
+          RENOVATE_CONFIG_MIGRATION: true
+          RENOVATE_VALIDATE_CONFIG_ONLY: true
