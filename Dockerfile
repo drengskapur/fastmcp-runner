@@ -6,9 +6,14 @@ FROM cgr.dev/chainguard/wolfi-base:latest
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
         crane \
+        py3.12-pip \
+        python-3.12 \
         su-exec \
         uv \
     && adduser -D -u 1000 user
+
+# Force Python 3.12 as default
+ENV UV_PYTHON=python3.12
 
 WORKDIR /app
 
