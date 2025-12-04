@@ -50,4 +50,4 @@ The target image must have:
 
 ## License
 
-MIT
+Apache 2.0
