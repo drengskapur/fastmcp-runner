@@ -1,10 +1,12 @@
 ---
+# D2 Architecture: push-artifact workflow
+# Builds and signs OCI artifacts on push to main
+# For production promotion, use release.yml workflow
 name: Build and Push
 
 'on':
   push:
     branches: [main]
-    tags: ['v*']
     paths:
       - Dockerfile
       - .github/workflows/build.yml
@@ -69,12 +71,17 @@ jobs:
           images: |
             ${{ env.GHCR_IMAGE }}
             ${{ env.DOCKERHUB_IMAGE }}
+          # D2: latest tag for staging/dev, semver handled by release.yml
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
             type=sha,prefix=
+          # D2: Add annotations for signature verification guardrails
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository }}/main/README.md
+            dev.fastmcp.artifact.workflow=${{ github.workflow }}
+            dev.fastmcp.artifact.git-ref=${{ github.ref }}
+            dev.fastmcp.artifact.git-sha=${{ github.sha }}
 
       - name: Build and push
         id: build

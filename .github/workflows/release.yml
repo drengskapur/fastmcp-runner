@@ -1,0 +1,347 @@
+---
+# D2 Architecture: release-artifact workflow
+# Automatically calculates semver from conventional commits using git-cliff
+# Promotes images to latest-stable for production
+name: Release
+
+'on':
+  # Manual trigger to create a release
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (calculate version but do not release)'
+        required: false
+        type: boolean
+        default: false
+  # Or trigger on explicit version tags
+  push:
+    tags: ['v*']
+
+permissions: {}
+
+env:
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+  DOCKERHUB_IMAGE: drengskapur/fastmcp-runner
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      semver: ${{ steps.version.outputs.semver }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      should_release: ${{ steps.check.outputs.should_release }}
+
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+        with:
+          fetch-depth: 0  # Full history for git-cliff
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@735e5933943122c5ac182670a935f54a949265c1  # v2.52.4
+        with:
+          tool: git-cliff
+
+      - name: Calculate next version
+        id: version
+        run: |
+          # If triggered by tag, use the tag
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            echo "Using tag version: $VERSION"
+          else
+            # Calculate from conventional commits
+            CURRENT=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            echo "Current version: $CURRENT"
+
+            # Use git-cliff to bump version
+            NEXT=$(git cliff --bumped-version 2>/dev/null || echo "")
+            if [ -z "$NEXT" ]; then
+              # No conventional commits since last tag, bump patch
+              NEXT=$(echo "$CURRENT" | awk -F. '{print $1"."$2"."$3+1}')
+            fi
+            VERSION="$NEXT"
+            echo "Calculated next version: $VERSION"
+          fi
+
+          # Ensure v prefix
+          VERSION="v${VERSION#v}"
+          SEMVER="${VERSION#v}"
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "semver=${SEMVER}" >> "$GITHUB_OUTPUT"
+          echo "major=$(echo ${SEMVER} | cut -d. -f1)" >> "$GITHUB_OUTPUT"
+          echo "minor=$(echo ${SEMVER} | cut -d. -f1-2)" >> "$GITHUB_OUTPUT"
+
+          echo "## Version" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Version: \`${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Semver: \`${SEMVER}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog for this release
+          CHANGELOG=$(git cliff --unreleased --strip header 2>/dev/null || echo "No changes")
+
+          # Store in file for multi-line output
+          echo "$CHANGELOG" > /tmp/changelog.md
+
+          # Output for GitHub Actions (escape newlines)
+          {
+            echo 'changelog<<EOF'
+            cat /tmp/changelog.md
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          echo "## Changelog" >> "$GITHUB_STEP_SUMMARY"
+          echo "$CHANGELOG" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check if should release
+        id: check
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Dry run - skipping release"
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.check.outputs.should_release == 'true' && !startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create annotated tag
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+
+          echo "Created and pushed tag: $VERSION"
+
+  build:
+    needs: version
+    if: needs.version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf  # v3.2.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349  # v3.7.1
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567  # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567  # v3.3.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804  # v5.7.0
+        with:
+          images: |
+            ${{ env.GHCR_IMAGE }}
+            ${{ env.DOCKERHUB_IMAGE }}
+          # D2: latest-stable for production, plus semver tags
+          tags: |
+            type=raw,value=latest-stable
+            type=raw,value=${{ needs.version.outputs.version }}
+            type=raw,value=${{ needs.version.outputs.semver }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ needs.version.outputs.semver }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            dev.fastmcp.artifact.workflow=${{ github.workflow }}
+            dev.fastmcp.artifact.git-ref=${{ github.ref }}
+            dev.fastmcp.artifact.git-sha=${{ github.sha }}
+            dev.fastmcp.artifact.release=true
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75  # v6.9.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd  # v2.3.0
+        with:
+          subject-name: ${{ env.GHCR_IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  sign:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: audit
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da  # v3.7.0
+
+      - name: Log in to registries
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Sign images with Cosign (keyless)
+        env:
+          DIGEST: ${{ needs.build.outputs.digest }}
+        run: |
+          cosign sign --yes ghcr.io/${{ github.repository }}@${DIGEST}
+          cosign sign --yes docker.io/drengskapur/fastmcp-runner@${DIGEST}
+
+  sbom:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: audit
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da  # v3.7.0
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0  # v0.18.0
+
+      - name: Log in to registries
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Generate and attach SBOM
+        env:
+          DIGEST: ${{ needs.build.outputs.digest }}
+        run: |
+          syft ghcr.io/${{ github.repository }}@${DIGEST} -o spdx-json > sbom.spdx.json
+          cosign attest --yes --predicate sbom.spdx.json --type spdx ghcr.io/${{ github.repository }}@${DIGEST}
+          cosign attest --yes --predicate sbom.spdx.json --type spdx docker.io/drengskapur/fastmcp-runner@${DIGEST}
+
+  github-release:
+    needs: [version, build, sign, sbom]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2  # v2.13.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@735e5933943122c5ac182670a935f54a949265c1  # v2.52.4
+        with:
+          tool: git-cliff
+
+      - name: Update CHANGELOG.md
+        run: |
+          git cliff --output CHANGELOG.md
+
+      - name: Commit changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --staged --quiet || git commit -m "chore(release): update changelog for ${{ needs.version.outputs.version }}"
+          git push origin HEAD:main || true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda  # v2.2.1
+        with:
+          tag_name: ${{ needs.version.outputs.version }}
+          name: ${{ needs.version.outputs.version }}
+          body: |
+            ${{ needs.version.outputs.changelog }}
+
+            ## Container Images
+
+            ### Production (latest-stable)
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:latest-stable
+            docker pull drengskapur/fastmcp-runner:latest-stable
+            ```
+
+            ### This Version
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ needs.version.outputs.version }}
+            docker pull drengskapur/fastmcp-runner:${{ needs.version.outputs.version }}
+            ```
+
+            ### Verify Signature
+            ```bash
+            cosign verify ghcr.io/${{ github.repository }}:${{ needs.version.outputs.version }} \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              --certificate-identity-regexp 'https://github.com/${{ github.repository }}/.*'
+            ```
+
+            ## Digest
+            ```
+            ${{ needs.build.outputs.digest }}
+            ```

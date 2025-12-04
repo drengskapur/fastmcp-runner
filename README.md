@@ -6,15 +6,42 @@ Generic bootstrap container for running FastMCP servers from private container r
 
 This container pulls and runs any FastMCP application from a private registry at runtime. Useful for environments like Hugging Face Spaces where you can't run arbitrary Docker images directly.
 
+## Image Tags (D2 Versioning)
+
+| Tag | Description | Use Case |
+|-----|-------------|----------|
+| `latest` | Built on every push to main | Development, staging |
+| `latest-stable` | Promoted via release workflow | **Production** |
+| `vX.Y.Z` | Specific version | Pinned deployments |
+
+**Production deployments should use `latest-stable`** - this tag is only updated when a release is explicitly created.
+
 ## Usage
 
 ```bash
+# Production (recommended)
+docker pull ghcr.io/drengskapur/fastmcp-runner:latest-stable
+
+# Development
+docker pull ghcr.io/drengskapur/fastmcp-runner:latest
+
+# Run
 docker run -e REGISTRY_USER=username \
            -e REGISTRY_PASSWORD=token \
            -e IMAGE=ghcr.io/org/my-fastmcp-app:latest \
            -e PORT=7860 \
            -p 7860:7860 \
-           docker.io/drengskapur/fastmcp-runner:latest
+           ghcr.io/drengskapur/fastmcp-runner:latest-stable
+```
+
+## Verify Image Signature
+
+All images are signed with [Sigstore cosign](https://docs.sigstore.dev/cosign/overview/) using keyless signing:
+
+```bash
+cosign verify ghcr.io/drengskapur/fastmcp-runner:latest-stable \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp 'https://github.com/drengskapur/fastmcp-runner/.*'
 ```
 
 ## Environment Variables
