@@ -24,7 +24,8 @@ set -eu
 : "${PORT:?}"
 
 echo "$REGISTRY_PASSWORD" | crane auth login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin >/dev/null
-crane export "$IMAGE" - | tar xf - -C / --no-same-owner --owner=1000 --group=1000 app data
+crane export "$IMAGE" - | tar xf - -C / -o app data
+chown -R 1000:1000 /app /data 2>/dev/null || true
 rm -rf ~/.docker
 
 exec su-exec user env -i \

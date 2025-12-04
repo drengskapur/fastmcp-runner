@@ -1,0 +1,8 @@
+# Default owners for everything in the repo
+* @drengskapur/maintainers
+
+# Dockerfile
+Dockerfile @drengskapur/maintainers
+
+# CI/CD
+.github/ @drengskapur/maintainers
