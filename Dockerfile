@@ -22,16 +22,13 @@ RUN <<'EOF' cat > /entrypoint.sh && chmod 500 /entrypoint.sh
 #!/bin/sh
 set -eu
 
-: "${REGISTRY:?}"
 : "${REGISTRY_USER:?}"
 : "${REGISTRY_PASSWORD:?}"
 : "${IMAGE:?}"
 : "${PORT:?}"
 
-echo "$REGISTRY_PASSWORD" | crane auth login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin >/dev/null
-crane export "$IMAGE" - | tar xf - -C / -o app data
+crane export --username "$REGISTRY_USER" --password "$REGISTRY_PASSWORD" "$IMAGE" - | tar xf - -C / -o app data
 chown -R 1000:1000 /app /data 2>/dev/null || true
-rm -rf ~/.docker
 
 exec su-exec user env -i \
     HOME=/home/user \
