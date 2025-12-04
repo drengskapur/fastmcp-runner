@@ -34,13 +34,24 @@ echo "$REGISTRY_PASSWORD" | crane auth login "$REGISTRY" -u "$REGISTRY_USER" --p
     && rm -rf ~/.docker
 chown -R 1000:1000 /app /data 2>/dev/null || true
 
-exec su-exec user env -i \
-    HOME=/home/user \
-    PATH=/usr/local/bin:/usr/bin:/bin \
-    uv run fastmcp run fastmcp.json \
-        --transport streamable-http \
-        --host 0.0.0.0 \
-        --port "$PORT"
+# Use pre-built venv if valid, otherwise let uv create one
+if [ -x /app/.venv/bin/python ] && /app/.venv/bin/python -c "import sys" 2>/dev/null; then
+    exec su-exec user env -i \
+        HOME=/home/user \
+        PATH=/app/.venv/bin:/usr/local/bin:/usr/bin:/bin \
+        python -m fastmcp run fastmcp.json \
+            --transport streamable-http \
+            --host 0.0.0.0 \
+            --port "$PORT"
+else
+    exec su-exec user env -i \
+        HOME=/home/user \
+        PATH=/usr/local/bin:/usr/bin:/bin \
+        uv run fastmcp run fastmcp.json \
+            --transport streamable-http \
+            --host 0.0.0.0 \
+            --port "$PORT"
+fi
 EOF
 
 # Note: Entrypoint runs as root to extract files, then drops to user via su-exec
