@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # hadolint ignore=DL3007
+# trivy:ignore:AVD-DS-0001 (Chainguard recommends :latest for daily security updates)
 FROM cgr.dev/chainguard/wolfi-base:latest
 
 # hadolint ignore=DL3018
