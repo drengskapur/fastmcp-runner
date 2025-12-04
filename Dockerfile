@@ -5,6 +5,7 @@ FROM cgr.dev/chainguard/wolfi-base:latest
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
+        build-base \
         crane \
         py3.12-pip \
         python-3.12 \
