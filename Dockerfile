@@ -1,0 +1,44 @@
+# syntax=docker/dockerfile:1
+
+# hadolint ignore=DL3007
+FROM cgr.dev/chainguard/wolfi-base:latest
+
+# hadolint ignore=DL3018
+RUN apk add --no-cache \
+        crane \
+        su-exec \
+        uv \
+    && adduser -D -u 1000 user
+
+WORKDIR /app
+
+# hadolint ignore=DL4006
+RUN <<'EOF' cat > /entrypoint.sh && chmod 500 /entrypoint.sh
+#!/bin/sh
+set -eu
+
+: "${REGISTRY:?}"
+: "${REGISTRY_USER:?}"
+: "${REGISTRY_PASSWORD:?}"
+: "${IMAGE:?}"
+: "${PORT:?}"
+
+echo "$REGISTRY_PASSWORD" | crane auth login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin >/dev/null
+crane export "$IMAGE" - | tar xf - -C / --no-same-owner --owner=1000 --group=1000 app data
+rm -rf ~/.docker
+
+exec su-exec user env -i \
+    HOME=/home/user \
+    PATH=/usr/local/bin:/usr/bin:/bin \
+    uv run fastmcp run fastmcp.json \
+        --transport streamable-http \
+        --host 0.0.0.0 \
+        --port "$PORT"
+EOF
+
+# Note: Entrypoint runs as root to extract files, then drops to user via su-exec
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget -qO- http://localhost:${PORT}/health || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]
