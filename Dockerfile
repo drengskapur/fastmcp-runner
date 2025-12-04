@@ -29,10 +29,10 @@ set -eu
 
 # Extract registry from image (e.g., ghcr.io from ghcr.io/user/repo:tag)
 REGISTRY="${IMAGE%%/*}"
-echo "$REGISTRY_PASSWORD" | crane auth login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin 2>/dev/null
-crane export "$IMAGE" - | tar xf - -C / -o app data
+echo "$REGISTRY_PASSWORD" | crane auth login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin 2>/dev/null \
+    && crane export "$IMAGE" - | tar xf - -C / -o app data \
+    && rm -rf ~/.docker
 chown -R 1000:1000 /app /data 2>/dev/null || true
-rm -rf ~/.docker
 
 exec su-exec user env -i \
     HOME=/home/user \
