@@ -126,7 +126,7 @@ _log() {
     if [ "${LOG_FORMAT:-text}" = "json" ]; then
         # JSON structured logging
         _msg=$(printf '%s' "$*" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g')
-        printf '{"ts":"%s","level":"%s","msg":"%s"}\n' "$_ts" "$_level" "$_msg"
+        printf '{"ts":"%s","level":"%s","msg":"%s"}\n' "$_ts" "$_level" "$_msg" >&2
     else
         # Human-readable
         case "$_level" in
@@ -135,7 +135,7 @@ _log() {
             warn)  _prefix="[WARN] " ;;
             error) _prefix="[ERROR]" ;;
         esac
-        printf '%s %s %s\n' "$_ts" "$_prefix" "$*"
+        printf '%s %s %s\n' "$_ts" "$_prefix" "$*" >&2
     fi
 }
 
