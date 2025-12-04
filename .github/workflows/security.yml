@@ -30,7 +30,7 @@ jobs:
           output: trivy-config.sarif
 
       - name: Upload Trivy config results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-config.sarif
@@ -54,7 +54,7 @@ jobs:
           output: trivy-image.sarif
 
       - name: Upload Trivy image results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-image.sarif
@@ -75,7 +75,7 @@ jobs:
           output-file: hadolint.sarif
 
       - name: Upload Hadolint results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: hadolint.sarif
