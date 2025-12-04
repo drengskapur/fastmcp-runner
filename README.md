@@ -9,37 +9,36 @@ This container pulls and runs any FastMCP application from a private registry at
 ## Usage
 
 ```bash
-docker run -e REGISTRY=ghcr.io \
-           -e REGISTRY_USER=username \
+docker run -e REGISTRY_USER=username \
            -e REGISTRY_PASSWORD=token \
            -e IMAGE=ghcr.io/org/my-fastmcp-app:latest \
            -e PORT=7860 \
            -p 7860:7860 \
-           ghcr.io/drengskapur/fastmcp-runner:latest
+           docker.io/drengskapur/fastmcp-runner:latest
 ```
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `REGISTRY` | Yes | Registry hostname (e.g., `ghcr.io`, `docker.io`) |
 | `REGISTRY_USER` | Yes | Username for registry authentication |
 | `REGISTRY_PASSWORD` | Yes | Password or token for registry authentication |
-| `IMAGE` | Yes | Full image reference to pull and run |
+| `IMAGE` | Yes | Full image reference to pull and run (registry extracted automatically) |
 | `PORT` | Yes | Port for the FastMCP server |
 
 ## How It Works
 
-1. Authenticates to the specified container registry
-2. Pulls and extracts `/app` and `/data` directories from the target image
-3. Runs the FastMCP server using `uv run fastmcp`
-4. Drops privileges to non-root user before running the application
+1. Extracts registry hostname from `IMAGE` (e.g., `ghcr.io` from `ghcr.io/org/repo:tag`)
+2. Authenticates to the registry, pulls image, and immediately clears credentials
+3. Extracts `/app` and `/data` directories from the target image
+4. Drops privileges to non-root user (UID 1000)
+5. Runs the FastMCP server using `uv run fastmcp run`
 
 ## Security
 
-- Credentials are cleared from the environment before the application starts
+- Credentials are cleared immediately after image pull (single chained command)
 - Application runs as non-root user (UID 1000)
-- Docker config is removed after authentication
+- Environment is sanitized before running the application (`env -i`)
 - Base image: [Chainguard wolfi-base](https://images.chainguard.dev/directory/image/wolfi-base/overview) (hardened, minimal)
 
 ## Requirements
