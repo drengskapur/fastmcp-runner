@@ -11,7 +11,7 @@
 # Pulls container images and runs them WITHOUT requiring a Docker daemon.
 #
 # ┌─────────────────────────────────────────────────────────────────────────┐
-# │                           SECURITY MODEL                                 │
+# │                           SECURITY MODEL                                │
 # ├─────────────────────────────────────────────────────────────────────────┤
 # │  • Credentials cleared immediately after registry auth                  │
 # │  • Staged extraction prevents system file overwrites                    │
