@@ -1,3 +1,8 @@
+---
+title: Architecture and Internals
+description: How FastMCP Runner works internally. Startup sequence, OCI image extraction, privilege separation, and component overview using crane and su-exec.
+---
+
 # Architecture
 
 This document explains how FastMCP Runner works internally. Understanding the architecture helps when debugging issues or evaluating whether it fits your use case.

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://fastmcp-runner.readthedocs.io/sitemap.xml

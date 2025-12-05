@@ -1,3 +1,8 @@
+---
+title: FastMCP Runner - Run MCP Servers Without Docker
+description: A generic OCI-based runner for Model Context Protocol (MCP) servers. Deploy containerized MCP applications to Hugging Face Spaces and serverless platforms without Docker.
+---
+
 # FastMCP Runner
 
 FastMCP Runner is a bootstrap container that runs [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) servers from OCI container images. It pulls images from container registries, extracts their filesystems, and executes the MCP server—all without requiring a Docker daemon.

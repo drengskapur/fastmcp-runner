@@ -1,3 +1,8 @@
+---
+title: Getting Started with FastMCP Runner
+description: Learn how to run your first MCP server using FastMCP Runner. Step-by-step guide for deploying containerized Model Context Protocol applications.
+---
+
 # Getting Started
 
 This guide walks through running an MCP application using FastMCP Runner. By the end, you'll understand the basic configuration and be able to deploy your own MCP server.

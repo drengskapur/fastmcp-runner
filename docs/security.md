@@ -1,3 +1,8 @@
+---
+title: Security Model
+description: FastMCP Runner security architecture including credential handling, privilege separation, filesystem isolation, and supply chain security with Sigstore signing.
+---
+
 # Security
 
 FastMCP Runner handles sensitive operations—registry credentials, arbitrary code execution, privilege management—and implements several controls to mitigate associated risks. This document explains the security model and helps you evaluate whether it meets your requirements.

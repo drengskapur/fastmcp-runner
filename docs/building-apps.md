@@ -1,3 +1,8 @@
+---
+title: Building MCP Applications for FastMCP Runner
+description: How to package your Model Context Protocol application as a container image. Dockerfile examples, entrypoint requirements, health checks, and optimization tips.
+---
+
 # Building MCP Applications
 
 This guide covers how to package your MCP application so it works with FastMCP Runner. The requirements are straightforward, but understanding them helps avoid common issues.

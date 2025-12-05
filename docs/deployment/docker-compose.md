@@ -1,3 +1,8 @@
+---
+title: Deploy with Docker Compose
+description: Run FastMCP Runner locally with Docker Compose. Configuration examples for development, multiple services, and production deployments.
+---
+
 # Docker Compose
 
 Docker Compose is useful for local development and self-hosted deployments. While you could run your MCP application image directly with Docker, using FastMCP Runner provides a consistent deployment model across environments.

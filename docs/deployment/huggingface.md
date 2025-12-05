@@ -1,3 +1,8 @@
+---
+title: Deploy MCP Servers to Hugging Face Spaces
+description: Step-by-step guide to deploying Model Context Protocol servers on Hugging Face Spaces using FastMCP Runner. Run private container images without Docker.
+---
+
 # Hugging Face Spaces
 
 Hugging Face Spaces provides free hosting for machine learning demos and applications. Docker Spaces allow you to run custom containers, but with restrictions—you cannot run Docker commands inside your container. FastMCP Runner works around this limitation by pulling your MCP application at the OCI layer.

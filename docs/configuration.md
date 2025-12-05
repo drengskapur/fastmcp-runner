@@ -1,3 +1,8 @@
+---
+title: Configuration Reference
+description: Complete environment variable reference for FastMCP Runner. Configure registry authentication, MCP transport, logging, and application passthrough variables.
+---
+
 # Configuration
 
 FastMCP Runner is configured entirely through environment variables. This page documents all available options, their defaults, and how they interact.
