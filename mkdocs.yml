@@ -1,0 +1,74 @@
+site_name: FastMCP Runner
+site_description: A generic OCI-based MCP server runner for serverless platforms
+site_url: https://drengskapur.github.io/fastmcp-runner
+repo_url: https://github.com/drengskapur/fastmcp-runner
+repo_name: drengskapur/fastmcp-runner
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Overview: index.md
+  - Getting Started: getting-started.md
+  - Configuration: configuration.md
+  - Architecture: architecture.md
+  - Security: security.md
+  - Deployment:
+      - Overview: deployment/index.md
+      - Hugging Face Spaces: deployment/huggingface.md
+      - Docker Compose: deployment/docker-compose.md
+  - Building MCP Applications: building-apps.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/drengskapur/fastmcp-runner
+  version:
+    provider: mike
