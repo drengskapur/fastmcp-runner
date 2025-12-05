@@ -36,6 +36,20 @@ This project implements the following security measures:
 - **Trivy**: Vulnerability and misconfiguration scanning
 - **Hadolint**: Dockerfile best practices
 - **CodeQL**: Static analysis (when applicable)
+- **TruffleHog**: Secret detection in code history
+- **Scorecard**: OpenSSF security best practices assessment
+
+### Workflow Token Permissions
+
+All GitHub Actions workflows follow the principle of least privilege:
+
+- Top-level `permissions: {}` denies all permissions by default
+- Each job explicitly requests only the minimum permissions required
+- Write permissions are granted only where necessary:
+  - `contents: write`: Creating release tags and updating changelogs
+  - `packages: write`: Publishing container images to registries
+  - `actions: write`: Triggering dependent workflows (scheduled rebuilds)
+  - `security-events: write`: Uploading security scan results to GitHub
 
 ## Verifying Image Signatures
 

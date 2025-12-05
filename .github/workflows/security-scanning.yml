@@ -55,6 +55,7 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
+          trivyignores: .trivyignore
 
   dependency-review:
     name: Dependency Review

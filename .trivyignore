@@ -1,0 +1,11 @@
+# Trivy ignore file
+# https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/#by-trivyignore
+
+# DS002: Image user should not be 'root'
+# JUSTIFICATION: FastMCP Runner requires root during init to:
+#   1. Authenticate to container registries (crane auth)
+#   2. Extract OCI image filesystem to system paths
+#   3. Set proper ownership on extracted files
+# The entrypoint.sh immediately drops privileges to non-root user (uid 1000)
+# via su-exec BEFORE running the MCP server. See Dockerfile SECURITY MODEL.
+DS002
