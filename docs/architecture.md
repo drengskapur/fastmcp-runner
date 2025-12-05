@@ -49,6 +49,8 @@ A Python script (`parse-oci-config`) transforms the image configuration into an 
 
 The launcher is written to `/tmp/launcher.sh` and made executable. When `LOG_LEVEL=debug`, the generated script is logged so you can see exactly what will run.
 
+**Conflicting entrypoint handling**: If the image's entrypoint is `/entrypoint.sh`, `entrypoint.sh`, `/start.sh`, or `/init.sh`, the runner uses the `CMD` instead. This prevents infinite recursion where the generated launcher would call FastMCP Runner's own entrypoint script.
+
 ### 5. Filesystem extraction
 
 The runner exports the image to a tar stream using `crane export` and extracts it to a staging directory. Not all files are copied to the runtime filesystem—FastMCP Runner explicitly allows only application-related paths:

@@ -15,7 +15,7 @@ A typical structure:
 │   └── your_app/
 │       ├── __init__.py
 │       └── server.py   # MCP server implementation
-└── fastmcp.json        # FastMCP configuration (if using FastMCP)
+└── ...                 # Framework-specific config files
 ```
 
 If your application needs persistent data, place it in `/data`. FastMCP Runner preserves this directory and, on platforms like Hugging Face Spaces, maps it to persistent storage.
@@ -24,15 +24,16 @@ If your application needs persistent data, place it in `/data`. FastMCP Runner p
 
 Your image must define an entrypoint or command that starts the MCP server. FastMCP Runner reads this from the OCI config and executes it.
 
-For FastMCP applications, the typical entrypoint is:
+Example entrypoints:
 
 ```dockerfile
-CMD ["uv", "run", "fastmcp", "run", "src/your_app/server.py"]
-```
+# Using uvicorn directly
+CMD ["uvicorn", "src.your_app.server:app", "--host", "0.0.0.0", "--port", "8000"]
 
-Or if using a `pyproject.toml` script:
+# Using a virtual environment
+CMD ["/app/.venv/bin/python", "-m", "your_app.server"]
 
-```dockerfile
+# Using a script defined in pyproject.toml
 CMD ["uv", "run", "your-server"]
 ```
 
@@ -61,9 +62,20 @@ Common variables your application should respect:
 | `MCP_TRANSPORT` | Transport type (`streamable-http` or `sse`) |
 | `MCP_PATH` | URL path for MCP endpoint |
 
+## Conflicting entrypoints
+
+FastMCP Runner skips certain entrypoint scripts that would conflict with its own startup process:
+
+- `/entrypoint.sh`
+- `entrypoint.sh`
+- `/start.sh`
+- `/init.sh`
+
+If your image uses one of these as its entrypoint, FastMCP Runner uses the `CMD` instead. This prevents infinite recursion where the runner would inadvertently call itself. If your image only has a conflicting entrypoint and no `CMD`, you'll need to restructure your Dockerfile.
+
 ## Example Dockerfile
 
-A complete Dockerfile for a FastMCP application:
+A complete Dockerfile for a Python MCP application:
 
 ```dockerfile
 FROM python:3.12-slim AS builder
@@ -101,8 +113,10 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD wget -q -O /dev/null http://localhost:${PORT}/health || exit 1
 
 # Run the MCP server
-CMD ["/app/.venv/bin/python", "-m", "uvicorn", "src.your_app.server:app", "--host", "0.0.0.0", "--port", "${PORT}"]
+CMD ["/app/.venv/bin/python", "-m", "uvicorn", "src.your_app.server:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
+
+Note that CMD cannot use shell variable expansion for `${PORT}` since Docker exec form doesn't process variables. Your application should read the `PORT` environment variable at runtime instead.
 
 ## Health checks
 

@@ -18,15 +18,19 @@ IMAGE=your-registry.example.com/team/app@sha256:abc123...
 
 The registry hostname is extracted from this value automatically for authentication. Both tag references (`:latest`) and digest references (`@sha256:...`) are supported.
 
+**Validation**: The value may only contain lowercase and uppercase letters, digits, periods, dashes, underscores, slashes, colons, and `@`. Images without a registry prefix (e.g., `myapp:latest` instead of `docker.io/library/myapp:latest`) will trigger a warning but are allowed.
+
 ### `PORT`
 
-The port number for the MCP server. Must be an integer between 1 and 65535.
+The port number for the MCP server.
 
 ```
 PORT=8000
 ```
 
 This value is passed to your application as the `PORT` environment variable and is used for the container's health check.
+
+**Validation**: Must be a numeric string representing an integer between 1 and 65535. Non-numeric values or out-of-range ports cause immediate failure with a descriptive error message.
 
 ## Authentication
 
