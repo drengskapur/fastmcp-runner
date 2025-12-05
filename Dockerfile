@@ -50,15 +50,14 @@
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Build arguments
-ARG WOLFI_VERSION=latest
 ARG PYTHON_VERSION=3.12
 
 #──────────────────────────────────────────────────────────────────────────────
 # Base stage - minimal runtime dependencies
 #──────────────────────────────────────────────────────────────────────────────
-# hadolint ignore=DL3007
-# trivy:ignore:AVD-DS-0001
-FROM cgr.dev/chainguard/wolfi-base:${WOLFI_VERSION} AS base
+# Pin base image by hash for supply chain security
+# To update: docker pull cgr.dev/chainguard/wolfi-base:latest && docker inspect --format='{{index .RepoDigests 0}}'
+FROM cgr.dev/chainguard/wolfi-base@sha256:42012fa027adc864efbb7cf68d9fc575ea45fe1b9fb0d16602e00438ce3901b1 AS base
 
 ARG PYTHON_VERSION
 
@@ -555,4 +554,11 @@ HEALTHCHECK \
     --retries=3 \
     CMD wget -q -O /dev/null "http://localhost:${PORT}${HEALTHCHECK_PATH:-/health}" || exit 1
 
+#──────────────────────────────────────────────────────────────────────────────
+# Security note: Container starts as root to perform privileged operations
+# (registry auth, filesystem extraction, permission setup), then immediately
+# drops to non-root user (uid 1000) via su-exec before running the MCP server.
+# This is by design - see SECURITY MODEL comment at top of file.
+# trivy:ignore:DS002
+#──────────────────────────────────────────────────────────────────────────────
 ENTRYPOINT ["/entrypoint.sh"]
