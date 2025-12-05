@@ -245,7 +245,15 @@ def generate_launcher(config: dict[str, Any]) -> str:
     # Command assembly
     entrypoint = config.get("Entrypoint") or []
     cmd = config.get("Cmd") or []
-    full_cmd = entrypoint + cmd
+
+    # Skip entrypoints that conflict with fastmcp-runner's own /entrypoint.sh
+    # These would cause infinite recursion when executed
+    CONFLICTING_ENTRYPOINTS = {"/entrypoint.sh", "entrypoint.sh", "/start.sh", "/init.sh"}
+    if entrypoint and entrypoint[0] in CONFLICTING_ENTRYPOINTS:
+        # Use CMD only - the container's entrypoint would conflict with ours
+        full_cmd = cmd if cmd else entrypoint
+    else:
+        full_cmd = entrypoint + cmd
 
     if not full_cmd:
         return "#!/bin/sh\necho 'error: no entrypoint or cmd in container' >&2\nexit 1\n"
