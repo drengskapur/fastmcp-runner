@@ -1,6 +1,6 @@
 site_name: FastMCP Runner
 site_description: A generic OCI-based MCP server runner for serverless platforms
-site_url: https://drengskapur.github.io/fastmcp-runner
+site_url: https://fastmcp-runner.readthedocs.io
 repo_url: https://github.com/drengskapur/fastmcp-runner
 repo_name: drengskapur/fastmcp-runner
 edit_uri: edit/main/docs/
