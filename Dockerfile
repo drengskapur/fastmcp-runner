@@ -1,4 +1,7 @@
 # syntax=docker/dockerfile:1.7-labs
+# trivy:ignore:DS002 - Container starts as root for privileged init operations,
+# then drops to non-root (uid 1000) via su-exec before running MCP server.
+# See SECURITY MODEL section below for details.
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # FastMCP Runner
@@ -554,11 +557,4 @@ HEALTHCHECK \
     --retries=3 \
     CMD wget -q -O /dev/null "http://localhost:${PORT}${HEALTHCHECK_PATH:-/health}" || exit 1
 
-#──────────────────────────────────────────────────────────────────────────────
-# Security note: Container starts as root to perform privileged operations
-# (registry auth, filesystem extraction, permission setup), then immediately
-# drops to non-root user (uid 1000) via su-exec before running the MCP server.
-# This is by design - see SECURITY MODEL comment at top of file.
-# trivy:ignore:DS002
-#──────────────────────────────────────────────────────────────────────────────
 ENTRYPOINT ["/entrypoint.sh"]
