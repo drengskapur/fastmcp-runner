@@ -5,23 +5,43 @@
     "docker:enableMajor",
     ":semanticCommits",
     ":automergeMinor",
-    ":automergePatch"
+    ":automergePatch",
+    ":pinAllExceptPeerDependencies",
+    "helpers:pinGitHubActionDigests"
   ],
   "labels": ["dependencies"],
+  "schedule": ["before 6am on monday"],
+  "timezone": "UTC",
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 10,
   "packageRules": [
     {
+      "description": "Automerge minor and patch updates for Dockerfile dependencies",
       "matchManagers": ["dockerfile"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     },
     {
+      "description": "Automerge minor and patch updates for GitHub Actions",
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
+    },
+    {
+      "description": "Group all GitHub Actions updates together",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions"
+    },
+    {
+      "description": "Security updates should be merged immediately",
+      "matchCategories": ["security"],
+      "automerge": true,
+      "schedule": ["at any time"]
     }
   ],
   "vulnerabilityAlerts": {
     "enabled": true,
-    "labels": ["security"]
+    "labels": ["security"],
+    "automerge": true
   }
 }

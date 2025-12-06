@@ -1,21 +1,6 @@
+# Dependabot configuration
+# Note: docker and github-actions are managed by Renovate (renovate.json)
+# which provides more advanced features like automerge and vulnerability alerts.
+# Keep Dependabot for any future package ecosystems not covered by Renovate.
 version: 2
-updates:
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-    labels:
-      - dependencies
-      - github-actions
-    commit-message:
-      prefix: "ci"
-
-  - package-ecosystem: docker
-    directory: /
-    schedule:
-      interval: weekly
-    labels:
-      - dependencies
-      - docker
-    commit-message:
-      prefix: "build"
+updates: []
