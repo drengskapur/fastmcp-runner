@@ -46,7 +46,7 @@ jobs:
           fetch-depth: 0  # Full history for git-cliff
 
       - name: Install git-cliff
-        uses: taiki-e/install-action@7b20dfd705618832f20d29066e34aa2f2f6194c2  # v2.52.8
+        uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06  # v2.62.63
         with:
           tool: git-cliff
 
@@ -295,7 +295,7 @@ jobs:
           token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Install git-cliff
-        uses: taiki-e/install-action@7b20dfd705618832f20d29066e34aa2f2f6194c2  # v2.52.8
+        uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06  # v2.62.63
         with:
           tool: git-cliff
 
