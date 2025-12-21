@@ -46,7 +46,7 @@ jobs:
           fetch-depth: 0  # Full history for git-cliff
 
       - name: Install git-cliff
-        uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06  # v2.62.63
+        uses: taiki-e/install-action@073d46cba2cde38f6698c798566c1b3e24feeb44  # v2.62.67
         with:
           tool: git-cliff
 
@@ -261,7 +261,7 @@ jobs:
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad  # v4.0.0
 
       - name: Install Syft
-        uses: anchore/sbom-action/download-syft@fbfd9c6c189226748411491745178e0c2017392d  # v0.20.10
+        uses: anchore/sbom-action/download-syft@43a17d6e7add2b5535efe4dcae9952337c479a93  # v0.20.11
 
       - name: Log in to registries
         run: |
@@ -295,7 +295,7 @@ jobs:
           token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Install git-cliff
-        uses: taiki-e/install-action@50708e9ba8d7b6587a2cb575ddaa9a62e927bc06  # v2.62.63
+        uses: taiki-e/install-action@073d46cba2cde38f6698c798566c1b3e24feeb44  # v2.62.67
         with:
           tool: git-cliff
 
