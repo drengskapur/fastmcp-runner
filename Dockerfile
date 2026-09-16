@@ -60,7 +60,7 @@ ARG PYTHON_VERSION=3.12
 #──────────────────────────────────────────────────────────────────────────────
 # Pin base image by hash for supply chain security
 # To update: docker pull cgr.dev/chainguard/wolfi-base:latest && docker inspect --format='{{index .RepoDigests 0}}'
-FROM cgr.dev/chainguard/wolfi-base@sha256:0d8efc73b806c780206b69d62e1b8cb10e9e2eefa0e4452db81b9fa00b1a5175 AS base
+FROM cgr.dev/chainguard/wolfi-base@sha256:1d95114038f76513a9ace6fca107d5582b08c65981f81f61cb56bf7fd2ef216d AS base
 
 ARG PYTHON_VERSION
 
